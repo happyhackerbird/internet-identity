@@ -1,29 +1,24 @@
 {
-  "include": ["src/showcase", "src/frontend"],
   "compilerOptions": {
-    "allowJs": true,
-    "checkJs": false,
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "lib": ["ES2021", "DOM"],
-    "module": "esnext",
-    "strict": true,
-    "target": "es2018",
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "module": "ESNext",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "skipLibCheck": true,
-    "allowSyntheticDefaultImports": true,
-    "noFallthroughCasesInSwitch": true,
+
+    /* Bundler mode */
     "moduleResolution": "node",
+    "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "types": ["node", "vite/client", "vitest/globals"],
-    "paths": {
-      "$generated": ["./src/frontend/generated"],
-      "$generated/*": ["./src/frontend/generated/*"],
-      "$src": ["./src/frontend/src"],
-      "$src/*": ["./src/frontend/src/*"],
-      "$showcase": ["./src/showcase/src"],
-      "$showcase/*": ["./src/showcase/src/*"]
-    }
+    "noEmit": true,
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "types": ["@wdio/globals/types", "@types/mocha"]
   },
-  "exclude": ["src/frontend/generated/*"]
+  "include": ["webapp"]
 }

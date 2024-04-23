@@ -1,189 +1,146 @@
-<p align="center"><a href="https://identity.ic0.app" target="_blank" rel="noopener noreferrer"><img width="600" src="./ii-logo.png" alt="Internet Identity"></a></p>
+[comment]: # This document is mainly written to be viewed on https://internetcomputer.org/docs/current/developer-docs/integrations/internet-identity/integrate-identity/
 
-<p align="center">
-    <a href="https://github.com/dfinity/internet-identity/actions/workflows/canister-tests.yml"><img src="https://github.com/dfinity/internet-identity/actions/workflows/canister-tests.yml/badge.svg" alt="Canister Tests"></a>
-    <a href="https://github.com/dfinity/internet-identity/actions/workflows/rust.yml"><img src="https://github.com/dfinity/internet-identity/actions/workflows/rust.yml/badge.svg" alt="Rust"></a>
-    <a href="https://github.com/dfinity/internet-identity/actions/workflows/frontend-checks.yml"><img src="https://github.com/dfinity/internet-identity/actions/workflows/frontend-checks.yml/badge.svg" alt="Frontend checks and lints"></a>
-    <a href="https://github.com/dfinity/internet-identity/releases"><img src="https://img.shields.io/github/downloads/dfinity/internet-identity/total?label=downloads&logo=github" alt="GitHub all releases"></a>
-</p>
+# Integrating with Internet Identity
 
-<p align="center">
-    🔗 <a href="https://identity.ic0.app">https://identity.ic0.app</a> • 📜 <a href="https://internetcomputer.org/docs/current/references/ii-spec">Specification</a> <br/> ― <br/>📚 <a href="https://forum.dfinity.org/c/internet-identity/32">Forum</a> • 🚑 <a href="https://github.com/dfinity/internet-identity/issues/new">Report an Issue</a> • 📞 <a href="https://discord.gg/E9FxceAg2j">Discord</a>
-</p>
+This guide shows how to integrate and test a project with Internet Identity. The complete code example can be found [here](https://github.com/dfinity/internet-identity/tree/main/demos/using-dev-build). It uses the development [build flavor](https://github.com/dfinity/internet-identity/blob/main/README.md#build-features-and-flavors) of Internet Identity and the [agent-js](https://github.com/dfinity/agent-js) library.
 
----
+This is a standalone project that you can copy to your own project.
 
-Internet Identity is an authentication service for the [Internet Computer][ic]. It is the authentication system that allows hundreds of thousands of users to log in to Dapps like [Distrikt], [DSCVR] and more.
+## Prerequisites
 
-Internet Identity is:
+- [dfx](https://internetcomputer.org/docs/current/developer-docs/build/install-upgrade-remove)
+- Node.js v16+
 
-* **Simple**: It uses some of the [WebAuthn] API to allow users to register and authenticate without passwords, using TouchID, FaceID, Windows Hello, and more.
-* **Flexible**: Integrating Internet Identity in a Dapp (or even Web 2 app) is as simple as opening the Internet Identity's HTTP interface, https://identity.ic0.app, in a new tab. No need to interact with the canister smart contract directly.
-* **Secure**: Different identities are issued for each app a user authenticates to and cannot be linked back to the user.
+This tutorial assumes that you are already familiar with the [basic concepts of the IC](https://internetcomputer.org/docs/current/developer-docs/ic-overview) (canisters, how to use `dfx`, etc.).
 
-For more information, see [What is Internet Identity?](https://internetcomputer.org/docs/current/tokenomics/identity-auth/what-is-ic-identity) on [internetcomputer.org](https://internetcomputer.org).
+## Usage
 
-### Table of Contents
+The following commands will start a replica, install the development Internet Identity canister, and run the test suite:
 
-- [Getting Started](#getting-started)
-  - [Local Replica](#local-replica)
-  - [Architecture Overview](#architecture-overview)
-  - [Building with Docker](#building-with-docker)
-  - [Integration with Internet Identity](#integration-with-internet-identity)
-- [Build Features and Flavors](#build-features-and-flavors)
-  - [Features](#features)
-  - [Flavors](#flavors)
-- [Stable Memory Compatibility](#stable-memory-compatibility)
-- [Getting Help](#getting-help)
-- [Links](#links)
+```bash
+# After checking out dfinity/internet-identity, run this in `./demos/using-dev-build`:
+$ dfx start --background --clean
+$ npm ci
+$ dfx deploy --no-wallet
+```
 
-## Getting Started
+At this point, the replica (for all practical matters, a local version of the Internet Computer) is running and three canisters have been deployed:
 
-This section gives an overview of Internet Identity's architecture, instructions on how to build the Wasm module (canister), and finally pointers for integrating Internet Identity in your own applications.
+- `internet_identity`: The development version of Internet Identity (downloaded from the [latest release](https://github.com/dfinity/internet-identity/releases/latest), see [`dfx.json`](./dfx.json)).
+- `webapp`: A tiny webapp that calls out to the `internet_identity` canister for authentication, and that then calls the `whoami` canister (see below) to show that the identity is valid. You'll find the source of the webapp in [`index.html`](./webapp/index.html) and [`index.ts`](./webapp/index.ts).
+- `whoami`: A simple canister that checks that calls are authenticated, and that returns the "principal of the caller". The implementation is terribly simple:
+  ```motoko
+  actor {
+      public query ({caller}) func whoami() : async Principal {
+          return caller;
+      };
+  };
+  ```
+  On the IC, a principal is the identifier of someone performing a request or "call" (hence "caller"). Every call must have a valid principal. There is also a special principal for anonymous calls. When using Internet Identity you are using [self-authenticating principals](https://smartcontracts.org/docs/interface-spec/index.html#principal), which is a very fancy way of saying that you have a private key on your laptop (hidden behind TouchID, Windows Hello, etc) that your browser uses to sign and prove that you are indeed the person issuing the calls to the IC.
 
-### Local Replica
+If the IC actually lets the call (request) through to the `whoami` canister, it means that everything checked out, and the `whoami` canister just responds with the information the IC adds to requests, namely your identity (principal).
 
-Use the Internet Identity canister in your local dfx project by adding the following code snippet to your `dfx.json` file:
+### Adding Internet Identity to your Local Project
+
+This section explains how to add Internet Identity to your (local) project. Add the following snippet to the `canister` section in your `dfx.json` file (see full example [here](https://github.com/dfinity/internet-identity/blob/main/demos/using-dev-build/dfx.json)):
 
 ```json
-{
-  "canisters": {
-    "internet_identity": {
-      "type": "custom",
-      "candid": "https://github.com/dfinity/internet-identity/releases/download/release-2024-04-15/internet_identity.did",
-      "wasm": "https://github.com/dfinity/internet-identity/releases/download/release-2024-04-15/internet_identity_dev.wasm.gz",
-      "remote": {
-        "id": {
-          "ic": "rdmx6-jaaaa-aaaaa-aaadq-cai"
-        }
-      },
-      "frontend": {}
+"internet_identity": {
+  "type": "custom",
+  "candid": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity.did",
+  "wasm": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity_dev.wasm.gz",
+  "remote": {
+    "id": {
+      "ic": "rdmx6-jaaaa-aaaaa-aaadq-cai"
     }
   }
 }
 ```
-To deploy, run `dfx deploy`.
 
-To access Internet Identity or configure it for your dapp, use one of the following URLs:
-* Chrome, Firefox: `http://<canister_id>.localhost:4943`
-* Safari: `http://localhost:4943?canisterId=<canister_id>`
+The `remote` property makes sure that your project will _not_ create a copy of Internet Identity on the IC when deploying to production.
 
-### Architecture Overview
+> Note: The wasm URL points to the [dev build](https://github.com/dfinity/internet-identity#flavors) of Internet Identity. It is recommended to use the dev build locally because it has modifications that make test automation easy.
 
-Internet Identity is an authentication service for the [Internet Computer][ic]. All programs on the Internet Computer are Wasm modules, or canisters (canister smart contracts).
+### Using the Auth-Client Library To Log In With Internet Identity
 
-![Architecture](./ii-architecture.png) <!-- this is an excalidraw.com image, source is ii-architecture.excalidraw -->
+DFINITY provides an [easy-to-use library (agent-js)](https://github.com/dfinity/agent-js) to log in with Internet Identity.
 
-Internet Identity runs as a single canister which both serves the frontend application code, and handles the requests sent by the frontend application code.
+These are the steps required to log in and use the obtained identity for canister calls:
 
-> 💡 The canister (backend) interface is specified by the [internet_identity.did](./src/internet_identity/internet_identity.did) [candid] interface. The (backend) canister code is located in [`src/internet_identity`](./src/internet_identity), and the frontend application code (served by the canister through the `http_request` method) is located in [`src/frontend`](./src/frontend).
+```js
+// First we have to create and AuthClient.
+const authClient = await AuthClient.create();
 
-The Internet Identity authentication service works indirectly by issuing "delegations" on the user's behalf; basically attestations signed with some private cryptographic material owned by the user. The private cryptographic material never leaves the user's device. The Internet Identity frontend application uses the [WebAuthn] API to first create the private cryptographic material, and then the [WebAuthn] API is used again to sign delegations.
-
-For information on how Internet Identity works in more detail, please refer to the following:
-
-* [Internet Identity presentation 📼](https://youtu.be/oxEr8UzGeBo), streamed during the Genesis Event
-* [Internet Identity Specification][spec], the official Internet Identity Specification
-
-### Building with Docker
-
-To get the canister (Wasm module) for Internet Identity, you can either **download a release** from the [releases] page, or build the code yourself. The simplest way to build the code yourself is to use [Docker] and the [`docker-build`](./scripts/docker-build) script:
-
-``` bash
-$ ./scripts/docker-build
+// Call authClient.login(...) to login with Internet Identity. This will open a new tab
+// with the login prompt. The code has to wait for the login process to complete.
+// We can either use the callback functions directly or wrap in a promise.
+await new Promise((resolve, reject) => {
+  authClient.login({
+    onSuccess: resolve,
+    onError: reject,
+  });
+});
 ```
 
-The [`Dockerfile`](./Dockerfile) specifies build instructions for Internet Identity. Building the `Dockerfile` will result in a scratch container that contains the Wasm module at `/internet_identity.wasm.gz`.
+Once the user has been authenticated with Internet Identity we have access to the identity:
 
-> 💡 The build can be customized with [build features](#build-features-and-flavors).
-
-We recommend using the [`docker-build`](./scripts/docker-build) script. It simplifies the usage of [build features](#build-features-and-flavors) and extracts the Wasm module from the final scratch container.
-
-> 💡 You can find instructions for building the code without Docker in the [HACKING] document.
-
-### Integration with Internet Identity
-
-The [`using-dev-build`](./demos/using-dev-build) demo shows a documented example project that integrates Internet Identity. For more, please refer to the [Client Authentication Protocol section](https://internetcomputer.org/docs/current/references/ii-spec#client-authentication-protocol) of the [Internet Identity Specification][spec] to integration Internet Identity in your app from scratch. For a just-add-water approach using the [agent-js](https://github.com/dfinity/agent-js) library (also used by `using-dev-build`), check out Kyle Peacock's [blogpost](http://kyle-peacock.com/blog/dfinity/integrating-internet-identity/).
-
-If you're interested in the infrastructure of how to get the Internet Identity canister and how to test it within your app, check out [`using-dev-build`](./demos/using-dev-build), which uses the Internet Identity development canister.
-
-## Build Features and Flavors
-
-The Internet Identity build can be customized to include [features](#features) that are
-useful when developing and testing. We provide pre-built [flavors](#flavors)
-of Internet Identity that include different sets of features.
-
-### Features
-
-These options can be used both when building [with docker](#building-with-docker) and
-[without docker][HACKING]. The features are enabled by setting the corresponding
-environment variable to `1`. Any other string, as well as not setting the
-environment variable, will disable the feature.
-
-For instance:
-
-``` bash
-$ II_FETCH_ROOT_KEY=1 dfx build
-$ II_DUMMY_CAPTCHA=1 II_DUMMY_AUTH=1 ./scripts/docker-build
+```js
+// Get the identity from the auth client:
+const identity = authClient.getIdentity();
+// Using the identity obtained from the auth client, we can create an agent to interact with the IC.
+const agent = new HttpAgent({ identity });
+// Using the interface description of our webapp, we create an Actor that we use to call the service methods.
+const webapp = Actor.createActor(webapp_idl, {
+  agent,
+  canisterId: webapp_id,
+});
+// Call whoami which returns the principal (user id) of the current user.
+const principal = await webapp.whoami();
 ```
 
-⚠️ These options should only ever be used during development as they effectively poke security holes in Internet Identity
+See [`index.js`](./webapp/index.ts) for the full working example.
+A detailed description of what happens behind the scenes is available in the [client auth protocol specification](https://github.com/dfinity/internet-identity/blob/main/docs/internet-identity-spec.adoc#client-auth-protocol).
 
-The features are described below:
+### Getting the Canister IDs
 
-<!-- NOTE: If you add a feature here, add it to 'features.ts' in the frontend
-codebase too, even if the feature only impacts the canister code and not the
-frontend. -->
+Let's now use those canisters.
 
-| Environment variable | Description |
-| --- | --- |
-| `II_FETCH_ROOT_KEY` | When enabled, this instructs the frontend code to fetch the "root key" from the replica.<br/>The Internet Computer (https://ic0.app) uses a private key to sign responses. This private key not being available locally, the (local) replica generates its own. This option effectively tells the Internet Identity frontend to fetch the public key from the replica it connects to. When this option is _not_ enabled, the Internet Identity frontend code will use the (hard coded) public key of the Internet Computer. |
-| `II_DUMMY_CAPTCHA` | When enabled, the CAPTCHA challenge (sent by the canister code to the frontend code) is always the known string `"a"`. This is useful for automated testing. |
-| `II_DUMMY_AUTH` | When enabled, the frontend code will use a known, stable private key for registering anchors and authenticating. This means that all anchors will have the same public key(s). In particular this bypasses the WebAuthn flows (TouchID, Windows Hello, etc), which simplifies automated testing. |
-| `II_DEV_CSP` | When enabled, the content security policy is weakend to allow connections to II using HTTP and allow II to connect via http in order to facilitate development.                                                                                                                                                                                                                                                                                                                                                       |
+In order to talk to those canisters (for instance to view the webapp in your browser) you need to figure the ID of each canister and then use an URL of the form `https://localhost:4943/?canisterId=<canister ID>` (where `4943` is the port used by `dfx` to proxy calls to the replica; that port is usually specified in the `dfx.json`). You can find the canister IDs in the output of the `dfx command`, or by checking `dfx`'s "internal" (read: non-documented) state:
 
-### Flavors
+```
+~/internet-identity/demos/using-dev-build$ cat .dfx/local/canister_ids.json
+{
+  "__Candid_UI": {
+    "local": "r7inp-6aaaa-aaaaa-aaabq-cai"
+  },
+  "internet_identity": {
+    "local": "rwlgt-iiaaa-aaaaa-aaaaa-cai"
+  },
+  "webapp": {
+    "local": "rrkah-fqaaa-aaaaa-aaaaq-cai"
+  },
+  "whoami": {
+    "local": "ryjl3-tyaaa-aaaaa-aaaba-cai"
+}
+```
 
-We offer some pre-built Wasm modules that contain flavors, i.e. sets of features targeting a particular use case. Flavors can be downloaded from the table below for the latest release or from the [release page](https://github.com/dfinity/internet-identity/releases) for a particular release.
+You might get different canister IDs (and that's totally fine). If the `webapp` canister ID is `rrkah-fqaaa-aaaaa-aaaaq-cai`, you should be able to point your browser to [`http://localhost:4943/?canisterId=rrkah-fqaaa-aaaaa-aaaaq-cai`](http://localhost:4943/?canisterId=rrkah-fqaaa-aaaaa-aaaaq-cai) to see the webapp. Hurray!
 
-| Flavor | Description | |
-| --- | --- | :---: |
-| Production | This is the production build deployed to https://identity.ic0.app. Includes none of the build features. | [💾](https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity_production.wasm.gz) |
-| Test | This flavor is used by Internet Identity's test suite. It fully supports authentication but uses a known CAPTCHA value for test automation. Includes the following features: <br><ul><li><code>II_FETCH_ROOT_KEY</code></li><li><code>II_DUMMY_CAPTCHA</code></li></ul>| [💾](https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity_test.wasm.gz) |
-| Development | This flavor contains a version of Internet Identity that effectively performs no checks. It can be useful for external developers who want to integrate Internet Identity in their project and care about the general Internet Identity authentication flow, without wanting to deal with authentication and, in particular, WebAuthentication. Includes the following features: <br><ul><li><code>II_FETCH_ROOT_KEY</code></li><li><code>II_DUMMY_CAPTCHA</code></li><li><code>II_DUMMY_AUTH</code></li><li><code>II_DEV_CSP</code></li></ul><br>See the [`using-dev-build`](demos/using-dev-build/README.md) project for an example on how to use this flavor.| [💾](https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity_dev.wasm.gz) |
+![](./webapp.png)
 
-## Stable Memory Compatibility
+_If you actually use the webapp, make sure that the "Internet Identity URL" field points to one of these URLS_:
 
-Internet Identity requires data in stable memory to have a specific layout in order to be upgradeable. The layout has been changed multiple times in the past. This is why II stable memory is versioned and each version of II is only compatible to some stable memory versions.
+- Chrome, Firefox: `http://<canister ID of the internet_identity canister>.localhost:4943/`.
+- Safari: `http://localhost:4943/?canisterId=<canister ID of the internet_identity canister>`.
 
-If on upgrade II traps with the message `stable memory layout version ... is no longer supported` then the stable memory layout has changed and is no longer compatible.
+## Local Development
 
-The easiest way to address this is to reinstall the canister (thus wiping stable memory). A canister can be reinstalled by executing `dfx deploy <canister> --mode reinstall`.
+Run `npm run dev` to build the app and serve it on `localhost:5173` with hot reload on code changes, ideal for hacking on the webapp.
 
-## Getting Help
+## Running Tests
 
-We're here to help! Here are some ways you can reach out for help if you get stuck:
+Run `npm run test` to run browser tests against the `internet_identity` canister.
 
-* [Internet Identity Bug Tracker](https://github.com/dfinity/internet-identity/issues): Create a new ticket if you encounter a bug using Internet Identity, or if an issue arises when you try to build the code.
-* [DFINITY Forum](https://forum.dfinity.org/c/internet-identity/32): The forum is a great place to look for information and to ask for help.
-* [Support](https://support.dfinity.org/hc/en-us/requests/new): Create a support request if you'd like to keep things private.
+## More Information
 
-## Links
-
-* [Internet Identity Specification][spec], the official Internet Identity Specification
-* [Integration with Internet Identity](http://kyle-peacock.com/blog/dfinity/integrating-internet-identity/) by Kyle Peacock
-* [What is Internet Identity?](https://internetcomputer.org/docs/current/tokenomics/identity-auth/what-is-ic-identity) on [internetcomputer.org](https://internetcomputer.org)
-* [Internet Identity presentation 📼](https://youtu.be/oxEr8UzGeBo) on YouTube, streamed during the Genesis Event
-* [Excalidraw](https://excalidraw.com), used to make diagrams
-
-[Distrikt]: https://distrikt.io
-[WebAuthn]: https://webauthn.guide
-[DSCVR]: https://dscvr.one
-
-[HACKING]: ./HACKING.md#running-locally
-[ic]: https://internetcomputer.org
-[spec]: https://internetcomputer.org/docs/current/references/ii-spec
-[releases]: https://github.com/dfinity/internet-identity/releases
-[Docker]: https://docker.io
-[links]: #links
-[candid]: https://internetcomputer.org/docs/current/developer-docs/build/languages/candid/candid-concepts/
+For more information, check the [`dfx.json`](./dfx.json) file, the [Genesis talk on Internet Identity](https://youtu.be/oxEr8UzGeBo) and the [Internet Computer documentation](https://internetcomputer.org/).
