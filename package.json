@@ -9,7 +9,8 @@
     "test": "npm run opts -- ./test.ts",
     "format": "prettier --write --plugin-search-dir=. .",
     "build": "tsc --noEmit && vite build",
-    "dev": "vite"
+    "dev": "vite", 
+    "issue": "tsc scripts/issueCredential.ts"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.6",
@@ -25,6 +26,11 @@
     "vite": "^4.5.3"
   },
   "dependencies": {
-    "@dfinity/auth-client": "^0.15.5"
+    "@dfinity/auth-client": "^0.15.5", 
+    "@dfinity/agent": "^0.15.5", 
+    "@dfinity/identity": "^0.15.5", 
+    "@dfinity/principal": "^0.15.5", 
+    "@dfinity/candid": "^0.15.5"
+
   }
 }

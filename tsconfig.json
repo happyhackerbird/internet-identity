@@ -18,7 +18,13 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    "types": ["@wdio/globals/types", "@types/mocha"]
+    "types": ["@wdio/globals/types", "@types/mocha"], 
+
+    "outDir": "./dist",  // Specifies the output directory for compiled files
+    "rootDir": "./src",  // Specifies the root directory of source files
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true
+
   },
-  "include": ["webapp"]
+  "include": ["webapp", "scripts"]
 }
