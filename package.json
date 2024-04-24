@@ -10,7 +10,7 @@
     "format": "prettier --write --plugin-search-dir=. .",
     "build": "tsc --noEmit && vite build",
     "dev": "vite", 
-    "issue": "tsc scripts/issueCredential.ts"
+    "issue": "tsc scripts/issueCredential.ts && node scripts/issueCredential.js"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.6",
