@@ -8,6 +8,7 @@ import type { Principal } from "@dfinity/principal";
 import {  createActor, CreateActorOptions } from "../../declarations/civic_canister_backend/index";
 
 const canisterId = "bkyz2-fmaaa-aaaaa-qaaaq-cai" //hardcoded civic canister id
+// get it using dfx canister id civic_canister_backend
 // process.env.CIVIC_CANISTER_BACKEND_ID;
 
 // The <canisterId>.localhost URL is used as opposed to setting the canister id as a parameter
@@ -100,24 +101,30 @@ document.getElementById("loginBtn")?.addEventListener("click", async () => {
 
 document.getElementById("credentialBtn")?.addEventListener("click", async () => {
   
-  const isOver18Claim: Claim = {
-    claims: {
-      "Is over 18": { Boolean: true }
-    }
-  };
+//   const isOver18Claim: Claim = {
+//     claims: [
+//         {
+//             key: "Is over 18",
+//             value: { Boolean: true }
+//         }
+//     ]
+// };
 
-  const credential: StoredCredential = {
-    id: "urn:uuid:6a9c92a9-2530-4e2b-9776-530467e9bbe0",
-    type_: ["VerifiableCredential", "VerifiedAdult"],
-    context: ["https://www.w3.org/2018/credentials/v1", "https://www.w3.org/2018/credentials/examples/v1"],
-    issuer: "https://civic.com",
-    claim: [isOver18Claim]
-  };
+
+
+//   const credential: StoredCredential = {
+//     id: "urn:uuid:6a9c92a9-2530-4e2b-9776-530467e9bbe0",
+//     type_: ["VerifiableCredential", "VerifiedAdult"],
+//     context: ["https://www.w3.org/2018/credentials/v1", "https://www.w3.org/2018/credentials/examples/v1"],
+//     claim: [isOver18Claim],
+//     issuer: "https://civic.com",
+//   };
+
   try {
-    const credentialResponse = await civic_canister.add_credentials(principal, [credential]);
+    const credentialResponse = await civic_canister.add_credentials(principal);
 
     console.log("Credential added:", credentialResponse);
-    document.getElementById("credentialStatus")!.innerText = "Credential Response: " + credentialResponse;
+    document.getElementById("credentialStatus")!.innerText = "Response: " + credentialResponse;
   } catch (error) {
     console.error("Error adding credential:", error);
     document.getElementById("credentialStatus")!.innerText = "Error adding credential: " + error;
