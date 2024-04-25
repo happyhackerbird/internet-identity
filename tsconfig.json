@@ -20,5 +20,5 @@
     "noFallthroughCasesInSwitch": true,
     "types": ["@wdio/globals/types", "@types/mocha"], 
   },
-  "include": ["webapp",]
+  "include": ["src",]
 }

@@ -3,7 +3,7 @@ import { readCanisterIds } from "./vite.plugins";
 
 export default defineConfig(
   ({ mode }: UserConfig): UserConfig => ({
-    root: "webapp",
+    root: "src",
     build: {
       outDir: "../dist",
       emptyOutDir: true,
