@@ -9,6 +9,7 @@ import {  createActor, CreateActorOptions } from "../../declarations/civic_canis
 
 const canisterId = "bkyz2-fmaaa-aaaaa-qaaaq-cai" //hardcoded civic canister id
 // process.env.CIVIC_CANISTER_BACKEND_ID;
+
 // The <canisterId>.localhost URL is used as opposed to setting the canister id as a parameter
 // since the latter is brittle with regards to transitively loaded resources.
 const local_ii_url = `http://${process.env.INTERNET_IDENTITY_CANISTER_ID}.localhost:4943`;
@@ -36,51 +37,6 @@ export interface StoredCredential {
   issuer: string;
   claim: Claim[];
 }
-
-
-
-
-// @ts-ignore - The interface of the civic canister
-// const webapp_idl = ({ IDL }) => {
-//   return IDL.Service({
-//     whoami: IDL.Func([], [IDL.Principal], ["query"]),
-//     add_credential: IDL.Func([IDL.Principal, IDL.Vec(IDL.Record({
-//         id: IDL.Text,
-//         type_: IDL.Vec(IDL.Text),
-//         context: IDL.Vec(IDL.Text),
-//         issuer: IDL.Text,
-//         claim: IDL.Vec(IDL.Record({
-//             claims: IDL.Vec(IDL.Record({
-//                 key: IDL.Text,
-//                 value: IDL.Variant({
-//                     Boolean: IDL.Bool,
-//                     Date: IDL.Text,
-//                     Text: IDL.Text,
-//                     Number: IDL.Int64,
-//                     Claim: IDL.Rec()
-//                 })
-//             }))
-//         }))
-//     }))], [IDL.Text])
-// });
-// };
-
-//   // @ts-ignore
-// const ii_idl = ({ IDL }) => {
-//   return IDL.Service({
-//     get_principal: IDL.Func([IDL.Nat64, IDL.Text], [IDL.Principal], ['query']),
-//   });
-// };
-
-// // @ts-ignore
-// export const init = ({ IDL }) => {
-//   return [];
-// };
-
-// export interface _SERVICE {
-//   whoami: ActorMethod<[], Principal>;
-//   add_credential: ActorMethod<[Principal, StoredCredential[]], string>;
-// }
 
 
 // Autofills the <input> for the II Url to point to the correct canister.
@@ -151,7 +107,7 @@ document.getElementById("credentialBtn")?.addEventListener("click", async () => 
   };
 
   const credential: StoredCredential = {
-    id: "http://example.edu/credentials/3732",
+    id: "urn:uuid:6a9c92a9-2530-4e2b-9776-530467e9bbe0",
     type_: ["VerifiableCredential", "VerifiedAdult"],
     context: ["https://www.w3.org/2018/credentials/v1", "https://www.w3.org/2018/credentials/examples/v1"],
     issuer: "https://civic.com",
@@ -166,8 +122,5 @@ document.getElementById("credentialBtn")?.addEventListener("click", async () => 
     console.error("Error adding credential:", error);
     document.getElementById("credentialStatus")!.innerText = "Error adding credential: " + error;
   }
-  
-
- 
 
 });
