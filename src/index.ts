@@ -5,8 +5,8 @@
 import { HttpAgent } from "@dfinity/agent";
 import { AuthClient } from "@dfinity/auth-client";
 import type { Principal } from "@dfinity/principal";
-import { createActor, CreateActorOptions } from "../../declarations/civic_canister_backend/index";
-import { _SERVICE } from "../../declarations/civic_canister_backend/civic_canister_backend.did"
+import {  createActor, CreateActorOptions } from "../../declarations/civic_canister_backend/index";
+import {_SERVICE} from "../../declarations/civic_canister_backend/civic_canister_backend.did"
 
 const canisterId = "bkyz2-fmaaa-aaaaa-qaaaq-cai" //hardcoded civic canister id
 // get it using dfx canister id civic_canister_backend
@@ -17,7 +17,7 @@ const canisterId = "bkyz2-fmaaa-aaaaa-qaaaq-cai" //hardcoded civic canister id
 const local_ii_url = `http://${process.env.INTERNET_IDENTITY_CANISTER_ID}.localhost:4943`;
 
 let principal: Principal | undefined;
-let civic_canister: _SERVICE;
+let civic_canister: _SERVICE ;
 
 export interface ClaimValue {
   Boolean?: boolean;
@@ -26,10 +26,9 @@ export interface ClaimValue {
   Number?: number;
   Claim?: Claim;
 }
-export type ClaimRecord = {
-  text: string;
-  value: ClaimValue;
-};
+export type ClaimRecord = [string, ClaimValue];
+
+
 
 export type Claim = {
   claims: ClaimRecord[];
@@ -82,12 +81,12 @@ document.getElementById("loginBtn")?.addEventListener("click", async () => {
   // At this point we're authenticated, and we can get the identity from the auth client:
   const identity = authClient.getIdentity();
   principal = identity.getPrincipal();
-
+  
   // Using the identity obtained from the auth client, we can create an agent to interact with the IC.
   const agent = new HttpAgent({ identity });
 
-  const option: CreateActorOptions = {
-    agent: agent,
+  const option : CreateActorOptions = {
+    agent: agent, 
   }
 
   civic_canister = createActor(canisterId, option);
@@ -100,34 +99,20 @@ document.getElementById("loginBtn")?.addEventListener("click", async () => {
 });
 
 document.getElementById("credentialBtn")?.addEventListener("click", async () => {
-  const alumniOfClaim: Claim = {
+  
+  const alumniOfClaim : Claim = {
     claims: [
-      {
-        text: "id",
-        value: { Text: "did:example:c276e12ec21ebfeb1f712ebc6f1" }
-      },
-      {
-        text: "name",
-        value: { Text: "Example University" }
-      },
-      { text: "degreeType", value: { Text: "MBA" } }
+      ["id", {Text: "did:example:c276e12ec21ebfeb1f712ebc6f1"}],
+     [ "name", {Text: "Example University"}],
+     [ "degreeType", {Text: "MBA"}]
     ]
   }
-
+    
   const mixedClaim: Claim = {
     claims: [
-      {
-        text: "id",
-        value: { Text: "did:example:c276e12ec21ebfeb1f712ebc6f1" }
-      },
-      {
-        text: "Name",
-        value: { Text: "Max Mustermann" }
-      },
-      {
-        text: "alumniOf",
-        value: { Claim: alumniOfClaim }
-      }
+      ["Is over 18", { Boolean: true }], 
+      ["name", { Text: "Max Mustermann"}], 
+      ["alumniOf", {Claim: alumniOfClaim}]
     ]
   };
 
