@@ -25,17 +25,22 @@ export interface ClaimValue {
   Number?: number;
   Claim?: Claim;
 }
+export type ClaimRecord = {
+  text: string;
+  value: ClaimValue;
+};
 
-export interface Claim {
-  claims: { [key: string]: ClaimValue };
-}
+export type Claim = {
+  claims: ClaimRecord[];
+};
+
 
 export interface StoredCredential {
   id: string;
   type_: string[];
   context: string[];
   issuer: string;
-  claim: Claim[];
+  // claim: Claim[];
 }
 
 
@@ -100,19 +105,27 @@ document.getElementById("loginBtn")?.addEventListener("click", async () => {
 
 document.getElementById("credentialBtn")?.addEventListener("click", async () => {
   
-  const isOver18Claim: Claim = {
-    claims: {
-      "Is over 18": { Boolean: true }
-    }
-  };
-
+  // const isOver18Claim: Claim = {
+  //   claims: [
+  //     {
+  //       text: "isOver18Claim",
+  //       value: { Boolean: true }
+  //     }
+  //   ]
+  // };
+  
+  // Construct the credential object with the isOver18Claim
   const credential: StoredCredential = {
     id: "urn:uuid:6a9c92a9-2530-4e2b-9776-530467e9bbe0",
     type_: ["VerifiableCredential", "VerifiedAdult"],
     context: ["https://www.w3.org/2018/credentials/v1", "https://www.w3.org/2018/credentials/examples/v1"],
+    // claim: [isOver18Claim],
     issuer: "https://civic.com",
-    claim: [isOver18Claim]
   };
+  
+  
+  console.log("sending claim", credential);
+  
   try {
     const credentialResponse = await civic_canister.add_credentials(principal, [credential]);
 
