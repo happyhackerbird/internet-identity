@@ -106,27 +106,6 @@ document.getElementById("loginBtn")?.addEventListener("click", async () => {
 
 document.getElementById("credentialBtn")?.addEventListener("click", async () => {
   
-<<<<<<< HEAD
-//   const isOver18Claim: Claim = {
-//     claims: [
-//         {
-//             key: "Is over 18",
-//             value: { Boolean: true }
-//         }
-//     ]
-// };
-
-
-
-//   const credential: StoredCredential = {
-//     id: "urn:uuid:6a9c92a9-2530-4e2b-9776-530467e9bbe0",
-//     type_: ["VerifiableCredential", "VerifiedAdult"],
-//     context: ["https://www.w3.org/2018/credentials/v1", "https://www.w3.org/2018/credentials/examples/v1"],
-//     claim: [isOver18Claim],
-//     issuer: "https://civic.com",
-//   };
-
-=======
   // const isOver18Claim: Claim = {
   //   claims: [
   //     {
@@ -148,7 +127,6 @@ document.getElementById("credentialBtn")?.addEventListener("click", async () => 
   
   console.log("sending claim", credential);
   
->>>>>>> ac739058
   try {
     const credentialResponse = await civic_canister.add_credentials(principal);
 
