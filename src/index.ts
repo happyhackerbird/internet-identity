@@ -6,6 +6,7 @@ import { HttpAgent } from "@dfinity/agent";
 import { AuthClient } from "@dfinity/auth-client";
 import type { Principal } from "@dfinity/principal";
 import {  createActor, CreateActorOptions } from "../../declarations/civic_canister_backend/index";
+import {_SERVICE} from "../../declarations/civic_canister_backend/civic_canister_backend.did"
 
 const canisterId = "bkyz2-fmaaa-aaaaa-qaaaq-cai" //hardcoded civic canister id
 // process.env.CIVIC_CANISTER_BACKEND_ID;
@@ -15,8 +16,7 @@ const canisterId = "bkyz2-fmaaa-aaaaa-qaaaq-cai" //hardcoded civic canister id
 const local_ii_url = `http://${process.env.INTERNET_IDENTITY_CANISTER_ID}.localhost:4943`;
 
 let principal: Principal | undefined;
-let civic_canister: _SERVICE | undefined;
-
+let civic_canister: _SERVICE ;
 
 export interface ClaimValue {
   Boolean?: boolean;
@@ -34,7 +34,6 @@ export type ClaimRecord = {
 export type Claim = {
   claims: ClaimRecord[];
 };
-
 
 
 export interface StoredCredential {
@@ -86,11 +85,6 @@ document.getElementById("loginBtn")?.addEventListener("click", async () => {
   
   // Using the identity obtained from the auth client, we can create an agent to interact with the IC.
   const agent = new HttpAgent({ identity });
-  // Using the interface description of our civic_canister, we create an actor that we use to call the service methods.
-  // civic_canister = Actor.createActor(webapp_idl, {
-  //   agent,
-  //   canisterId: canisterId!,
-  // });
 
   const option : CreateActorOptions = {
     agent: agent, 
@@ -106,24 +100,30 @@ document.getElementById("loginBtn")?.addEventListener("click", async () => {
 });
 
 document.getElementById("credentialBtn")?.addEventListener("click", async () => {
-  // const alumniOfClaim : Claim = {
-  //   claims: [
-  //     ["id", {Text: "did:example:c276e12ec21ebfeb1f712ebc6f1"}],
-  //    [ "name", {Text: "Example University"}],
-  //    [ "degreeType", {Text: "MBA"}]
-  //   ]
-  // }
-  
-  const claimRecord: ClaimRecord = {
-    text: "id",
-    value: { Text: "did:example:c276e12ec21ebfeb1f712ebc6f1" }
-  };
-  
-  const isOver18Claim: Claim = {
+  const alumniOfClaim : Claim = {
     claims: [
-      claimRecord,
-      // ["name", { Text: "Max Mustermann"}], 
-      // ["alumniOf", {Claim: alumniOfClaim}]
+      {text: "id",
+      value:  {Text: "did:example:c276e12ec21ebfeb1f712ebc6f1"}},
+     {text: "name", 
+     value: {Text: "Example University"}},
+     {text: "degreeType", value: {Text: "MBA"}}
+    ]
+  }
+    
+  const mixedClaim: Claim = {
+    claims: [
+      {
+        text: "id",
+        value: { Text: "did:example:c276e12ec21ebfeb1f712ebc6f1" }
+      },
+      {
+        text: "Name", 
+        value: {Text: "Max Mustermann"}
+      },
+      {
+        text: "alumniOf",
+        value: {Claim: alumniOfClaim}
+      }
     ]
   };
 
@@ -133,10 +133,10 @@ document.getElementById("credentialBtn")?.addEventListener("click", async () => 
     type_: ["VerifiableCredential", "VerifiedAdult"],
     context: ["https://www.w3.org/2018/credentials/v1", "https://www.w3.org/2018/credentials/examples/v1"],
     issuer: "https://civic.com",
-    claim: [isOver18Claim]
+    claim: [mixedClaim]
   };
   try {
-    console.log("adding a new credential", credential);
+    console.log("Adding a new credential", credential);
     const credentialResponse = await civic_canister.add_credentials(principal, [credential]);
 
     console.log("Credential added:", credentialResponse);
