@@ -9,13 +9,13 @@
     "test": "npm run opts -- ./test.ts",
     "format": "prettier --write --plugin-search-dir=. .",
     "build": "tsc --noEmit && vite build",
-    "dev": "vite", 
+    "dev": "vite",
     "issue": "tsc scripts/issueCredential.ts && node scripts/issueCredential.js"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.6",
-    "@wdio/globals": "8.32.3",
     "@wdio/cli": "8.32.3",
+    "@wdio/globals": "8.32.3",
     "@wdio/local-runner": "8.32.3",
     "@wdio/mocha-framework": "8.32.3",
     "@wdio/spec-reporter": "^8.21.0",
@@ -26,11 +26,10 @@
     "vite": "^4.5.3"
   },
   "dependencies": {
-    "@dfinity/auth-client": "^0.15.5", 
-    "@dfinity/agent": "^0.15.5", 
-    "@dfinity/identity": "^0.15.5", 
-    "@dfinity/principal": "^0.15.5", 
-    "@dfinity/candid": "^0.15.5"
-
+    "@dfinity/agent": "^1.2.1",
+    "@dfinity/auth-client": "^0.15.5",
+    "@dfinity/candid": "^0.15.5",
+    "@dfinity/identity": "^0.15.5",
+    "@dfinity/principal": "^0.15.5"
   }
 }
