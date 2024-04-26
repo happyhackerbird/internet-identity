@@ -26,9 +26,16 @@ export interface ClaimValue {
   Claim?: Claim;
 }
 
-export interface Claim {
-  claims: { [key: string]: ClaimValue };
-}
+export type ClaimRecord = {
+  text: string;
+  value: ClaimValue;
+};
+
+export type Claim = {
+  claims: ClaimRecord[];
+};
+
+
 
 export interface StoredCredential {
   id: string;
@@ -99,12 +106,27 @@ document.getElementById("loginBtn")?.addEventListener("click", async () => {
 });
 
 document.getElementById("credentialBtn")?.addEventListener("click", async () => {
+  // const alumniOfClaim : Claim = {
+  //   claims: [
+  //     ["id", {Text: "did:example:c276e12ec21ebfeb1f712ebc6f1"}],
+  //    [ "name", {Text: "Example University"}],
+  //    [ "degreeType", {Text: "MBA"}]
+  //   ]
+  // }
+  
+  const claimRecord: ClaimRecord = {
+    text: "id",
+    value: { Text: "did:example:c276e12ec21ebfeb1f712ebc6f1" }
+  };
   
   const isOver18Claim: Claim = {
-    claims: {
-      "Is over 18": { Boolean: true }
-    }
+    claims: [
+      claimRecord,
+      // ["name", { Text: "Max Mustermann"}], 
+      // ["alumniOf", {Claim: alumniOfClaim}]
+    ]
   };
+
 
   const credential: StoredCredential = {
     id: "urn:uuid:6a9c92a9-2530-4e2b-9776-530467e9bbe0",
@@ -114,10 +136,11 @@ document.getElementById("credentialBtn")?.addEventListener("click", async () => 
     claim: [isOver18Claim]
   };
   try {
+    console.log("adding a new credential", credential);
     const credentialResponse = await civic_canister.add_credentials(principal, [credential]);
 
     console.log("Credential added:", credentialResponse);
-    document.getElementById("credentialStatus")!.innerText = "Credential Response: " + credentialResponse;
+    document.getElementById("credentialStatus")!.innerText = "Response: " + credentialResponse;
   } catch (error) {
     console.error("Error adding credential:", error);
     document.getElementById("credentialStatus")!.innerText = "Error adding credential: " + error;
