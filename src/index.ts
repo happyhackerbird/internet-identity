@@ -36,12 +36,13 @@ export type Claim = {
 };
 
 
+
 export interface StoredCredential {
   id: string;
   type_: string[];
   context: string[];
   issuer: string;
-  // claim: Claim[];
+  claim: Claim[];
 }
 
 
@@ -105,30 +106,37 @@ document.getElementById("loginBtn")?.addEventListener("click", async () => {
 });
 
 document.getElementById("credentialBtn")?.addEventListener("click", async () => {
+  const alumniOfClaim : Claim = {
+    claims: [
+      ["id", {Text: "did:example:c276e12ec21ebfeb1f712ebc6f1"}],
+     [ "name", {Text: "Example University"}],
+     [ "degreeType", {Text: "MBA"}]
+    ]
+  }
+  const isOver18Claim: Claim = {
+    claims: [
+      ["Is over 18", { Boolean: true }], 
+      ["name", { Text: "Max Mustermann"}], 
+      ["alumniOf", {Claim: alumniOfClaim}]
+    ]
+  };
+
+  const claimRecord: ClaimRecord = {
+    text: "id",
+    value: { Text: "did:example:c276e12ec21ebfeb1f712ebc6f1" }
+  };
   
-  // const isOver18Claim: Claim = {
-  //   claims: [
-  //     {
-  //       text: "isOver18Claim",
-  //       value: { Boolean: true }
-  //     }
-  //   ]
-  // };
   
-  // Construct the credential object with the isOver18Claim
   const credential: StoredCredential = {
     id: "urn:uuid:6a9c92a9-2530-4e2b-9776-530467e9bbe0",
     type_: ["VerifiableCredential", "VerifiedAdult"],
     context: ["https://www.w3.org/2018/credentials/v1", "https://www.w3.org/2018/credentials/examples/v1"],
-    // claim: [isOver18Claim],
     issuer: "https://civic.com",
+    claim: [isOver18Claim]
   };
-  
-  
-  console.log("sending claim", credential);
-  
   try {
-    const credentialResponse = await civic_canister.add_credentials(principal);
+    console.log("adding a new credential", credential);
+    const credentialResponse = await civic_canister.add_credentials(principal, [credential]);
 
     console.log("Credential added:", credentialResponse);
     document.getElementById("credentialStatus")!.innerText = "Response: " + credentialResponse;
