@@ -27,9 +27,16 @@ export interface ClaimValue {
   Claim?: Claim;
 }
 
-export interface Claim {
-  claims: { [key: string]: ClaimValue };
-}
+export type ClaimRecord = {
+  text: string;
+  value: ClaimValue;
+};
+
+export type Claim = {
+  claims: ClaimRecord[];
+};
+
+
 
 export interface StoredCredential {
   id: string;
@@ -100,28 +107,38 @@ document.getElementById("loginBtn")?.addEventListener("click", async () => {
 });
 
 document.getElementById("credentialBtn")?.addEventListener("click", async () => {
+  const alumniOfClaim : Claim = {
+    claims: [
+      ["id", {Text: "did:example:c276e12ec21ebfeb1f712ebc6f1"}],
+     [ "name", {Text: "Example University"}],
+     [ "degreeType", {Text: "MBA"}]
+    ]
+  }
+  const isOver18Claim: Claim = {
+    claims: [
+      ["Is over 18", { Boolean: true }], 
+      ["name", { Text: "Max Mustermann"}], 
+      ["alumniOf", {Claim: alumniOfClaim}]
+    ]
+  };
+
+  const claimRecord: ClaimRecord = {
+    text: "id",
+    value: { Text: "did:example:c276e12ec21ebfeb1f712ebc6f1" }
+  };
   
-//   const isOver18Claim: Claim = {
-//     claims: [
-//         {
-//             key: "Is over 18",
-//             value: { Boolean: true }
-//         }
-//     ]
-// };
+  
 
-
-
-//   const credential: StoredCredential = {
-//     id: "urn:uuid:6a9c92a9-2530-4e2b-9776-530467e9bbe0",
-//     type_: ["VerifiableCredential", "VerifiedAdult"],
-//     context: ["https://www.w3.org/2018/credentials/v1", "https://www.w3.org/2018/credentials/examples/v1"],
-//     claim: [isOver18Claim],
-//     issuer: "https://civic.com",
-//   };
-
+  const credential: StoredCredential = {
+    id: "urn:uuid:6a9c92a9-2530-4e2b-9776-530467e9bbe0",
+    type_: ["VerifiableCredential", "VerifiedAdult"],
+    context: ["https://www.w3.org/2018/credentials/v1", "https://www.w3.org/2018/credentials/examples/v1"],
+    issuer: "https://civic.com",
+    claim: [isOver18Claim]
+  };
   try {
-    const credentialResponse = await civic_canister.add_credentials(principal);
+    console.log("adding a new credential", credential);
+    const credentialResponse = await civic_canister.add_credentials(principal, [credential]);
 
     console.log("Credential added:", credentialResponse);
     document.getElementById("credentialStatus")!.innerText = "Response: " + credentialResponse;
