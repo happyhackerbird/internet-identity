@@ -106,27 +106,27 @@ document.getElementById("loginBtn")?.addEventListener("click", async () => {
 });
 
 document.getElementById("credentialBtn")?.addEventListener("click", async () => {
-  // const alumniOfClaim : Claim = {
-  //   claims: [
-  //     ["id", {Text: "did:example:c276e12ec21ebfeb1f712ebc6f1"}],
-  //    [ "name", {Text: "Example University"}],
-  //    [ "degreeType", {Text: "MBA"}]
-  //   ]
-  // }
-  
+  const alumniOfClaim : Claim = {
+    claims: [
+      ["id", {Text: "did:example:c276e12ec21ebfeb1f712ebc6f1"}],
+     [ "name", {Text: "Example University"}],
+     [ "degreeType", {Text: "MBA"}]
+    ]
+  }
+  const isOver18Claim: Claim = {
+    claims: [
+      ["Is over 18", { Boolean: true }], 
+      ["name", { Text: "Max Mustermann"}], 
+      ["alumniOf", {Claim: alumniOfClaim}]
+    ]
+  };
+
   const claimRecord: ClaimRecord = {
     text: "id",
     value: { Text: "did:example:c276e12ec21ebfeb1f712ebc6f1" }
   };
   
-  const isOver18Claim: Claim = {
-    claims: [
-      claimRecord,
-      // ["name", { Text: "Max Mustermann"}], 
-      // ["alumniOf", {Claim: alumniOfClaim}]
-    ]
-  };
-
+  
 
   const credential: StoredCredential = {
     id: "urn:uuid:6a9c92a9-2530-4e2b-9776-530467e9bbe0",
