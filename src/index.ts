@@ -6,7 +6,7 @@ import { HttpAgent } from "@dfinity/agent";
 import { AuthClient } from "@dfinity/auth-client";
 import type { Principal } from "@dfinity/principal";
 import {  createActor, CreateActorOptions } from "../../declarations/civic_canister_backend/index";
-import {_SERVICE} from "../../declarations/civic_canister_backend/civic_canister_backend.did"
+import { Secp256k1KeyIdentity } from '@dfinity/identity-secp256k1';
 
 const canisterId = "bkyz2-fmaaa-aaaaa-qaaaq-cai" //hardcoded civic canister id
 // get it using dfx canister id civic_canister_backend
@@ -16,8 +16,8 @@ const canisterId = "bkyz2-fmaaa-aaaaa-qaaaq-cai" //hardcoded civic canister id
 // since the latter is brittle with regards to transitively loaded resources.
 const local_ii_url = `http://${process.env.INTERNET_IDENTITY_CANISTER_ID}.localhost:4943`;
 
+
 let principal: Principal | undefined;
-let civic_canister: _SERVICE ;
 
 export interface ClaimValue {
   Boolean?: boolean;
@@ -59,6 +59,26 @@ document.body.onload = () => {
   document.querySelector<HTMLInputElement>("#iiUrl")!.value = iiUrl;
 };
 
+
+async function createAgentWithIdentity() {
+  const privKey = new Uint8Array( [
+    73, 186, 183, 223, 243, 86,  48, 148,
+   83, 221,  41,  75, 229, 70,  56,  65,
+  247, 179, 125,  33, 172, 58, 152,  14,
+  160, 114,  17,  22, 118,  0,  41, 243
+  ]) ;
+
+  const identity = Secp256k1KeyIdentity.fromSecretKey(privKey);
+
+  // Create an HttpAgent with the identity
+  const agent = new HttpAgent({ identity });
+
+  console.log('Using Civic Principal:', identity.getPrincipal().toText());
+
+  return agent;
+}
+
+
 document.getElementById("loginBtn")?.addEventListener("click", async () => {
   // When the user clicks, we start the login process.
   // First we have to create and AuthClient.
@@ -82,15 +102,6 @@ document.getElementById("loginBtn")?.addEventListener("click", async () => {
   const identity = authClient.getIdentity();
   principal = identity.getPrincipal();
   
-  // Using the identity obtained from the auth client, we can create an agent to interact with the IC.
-  const agent = new HttpAgent({ identity });
-
-  const option : CreateActorOptions = {
-    agent: agent, 
-  }
-
-  civic_canister = createActor(canisterId, option);
-
   // show principal and credential button 
   document.getElementById("credentialBtn")!.style.display = 'inline';
   document.getElementById("loginStatus")!.innerText = "User Principal from Civic Canister POV: " + principal.toText();
@@ -99,6 +110,15 @@ document.getElementById("loginBtn")?.addEventListener("click", async () => {
 });
 
 document.getElementById("credentialBtn")?.addEventListener("click", async () => {
+
+  const agent = await createAgentWithIdentity();
+
+  const option : CreateActorOptions = {
+    agent: agent, 
+  }
+
+  const civic_canister = createActor(canisterId, option);
+
   
   const alumniOfClaim : Claim = {
     claims: [
@@ -129,7 +149,7 @@ document.getElementById("credentialBtn")?.addEventListener("click", async () => 
     const credentialResponse = await civic_canister.add_credentials(principal, [credential]);
 
     console.log("Credential added:", credentialResponse);
-    document.getElementById("credentialStatus")!.innerText = "Response: " + credentialResponse;
+    document.getElementById("credentialStatus")!.innerText = credentialResponse;
   } catch (error) {
     console.error("Error adding credential:", error);
     document.getElementById("credentialStatus")!.innerText = "Error adding credential: " + error;
