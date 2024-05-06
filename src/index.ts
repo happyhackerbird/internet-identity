@@ -1,16 +1,10 @@
-/* A simple civic_canister that authenticates the user with Internet Identity and that
- * then issues a credential against the user principal.
- */
-
 import { HttpAgent } from "@dfinity/agent";
 import { AuthClient } from "@dfinity/auth-client";
 import type { Principal } from "@dfinity/principal";
 import {  createActor, CreateActorOptions } from "../../declarations/civic_canister_backend/index";
 import { Secp256k1KeyIdentity } from '@dfinity/identity-secp256k1';
 
-const canisterId = "bkyz2-fmaaa-aaaaa-qaaaq-cai" //hardcoded civic canister id
-// get it using dfx canister id civic_canister_backend
-// process.env.CIVIC_CANISTER_BACKEND_ID;
+const canisterId = "b77ix-eeaaa-aaaaa-qaada-cai" //hardcoded civic canister id, get it using dfx canister id civic_canister_backend
 
 // The <canisterId>.localhost URL is used as opposed to setting the canister id as a parameter
 // since the latter is brittle with regards to transitively loaded resources.
@@ -43,7 +37,6 @@ export interface StoredCredential {
   claim: Claim[];
 }
 
-
 // Autofills the <input> for the II Url to point to the correct canister.
 document.body.onload = () => {
   let iiUrl;
@@ -61,12 +54,13 @@ document.body.onload = () => {
 
 
 async function createAgentWithIdentity() {
+  // secret key generated with https://github.com/krpeacock/node-identity-pem/blob/main/index.js
   const privKey = new Uint8Array( [
     73, 186, 183, 223, 243, 86,  48, 148,
    83, 221,  41,  75, 229, 70,  56,  65,
   247, 179, 125,  33, 172, 58, 152,  14,
   160, 114,  17,  22, 118,  0,  41, 243
-  ]) ;
+  ]) ; 
 
   const identity = Secp256k1KeyIdentity.fromSecretKey(privKey);
 
@@ -80,7 +74,6 @@ async function createAgentWithIdentity() {
 
 
 document.getElementById("loginBtn")?.addEventListener("click", async () => {
-  // When the user clicks, we start the login process.
   // First we have to create and AuthClient.
   const authClient = await AuthClient.create();
 
@@ -119,7 +112,7 @@ document.getElementById("credentialBtn")?.addEventListener("click", async () => 
 
   const civic_canister = createActor(canisterId, option);
 
-  
+  // Example Credential with mixed claims
   const alumniOfClaim : Claim = {
     claims: [
       ["id", {Text: "did:example:c276e12ec21ebfeb1f712ebc6f1"}],
