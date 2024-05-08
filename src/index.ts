@@ -4,7 +4,7 @@ import type { Principal } from "@dfinity/principal";
 import {  createActor, CreateActorOptions } from "./civic_canister_backend/index";
 import { Secp256k1KeyIdentity } from '@dfinity/identity-secp256k1';
 
-const canisterId = "bkyz2-fmaaa-aaaaa-qaaaq-cai" //hardcoded civic canister id, get it using dfx canister id civic_canister_backend
+const canisterId = "asrmz-lmaaa-aaaaa-qaaeq-cai" //hardcoded civic canister id, get it using dfx canister id civic_canister_backend
 
 // The <canisterId>.localhost URL is used as opposed to setting the canister id as a parameter
 // since the latter is brittle with regards to transitively loaded resources.
@@ -86,7 +86,7 @@ document.getElementById("loginBtn")?.addEventListener("click", async () => {
   await new Promise<void>((resolve, reject) => {
     authClient.login({
       identityProvider: iiUrl,
-      derivationOrigin: "http://bkyz2-fmaaa-aaaaa-qaaaq-cai.localhost:4943",
+      derivationOrigin: `http://${canisterId}.localhost:4943`,
       onSuccess: resolve,
       onError: reject,
     });
