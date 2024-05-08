@@ -1,10 +1,10 @@
 import { HttpAgent } from "@dfinity/agent";
 import { AuthClient } from "@dfinity/auth-client";
 import type { Principal } from "@dfinity/principal";
-import {  createActor, CreateActorOptions } from "../../declarations/civic_canister_backend/index";
+import {  createActor, CreateActorOptions } from "./civic_canister_backend/index";
 import { Secp256k1KeyIdentity } from '@dfinity/identity-secp256k1';
 
-const canisterId = "b77ix-eeaaa-aaaaa-qaada-cai" //hardcoded civic canister id, get it using dfx canister id civic_canister_backend
+const canisterId = "bkyz2-fmaaa-aaaaa-qaaaq-cai" //hardcoded civic canister id, get it using dfx canister id civic_canister_backend
 
 // The <canisterId>.localhost URL is used as opposed to setting the canister id as a parameter
 // since the latter is brittle with regards to transitively loaded resources.
@@ -13,13 +13,12 @@ const local_ii_url = `http://${process.env.INTERNET_IDENTITY_CANISTER_ID}.localh
 
 let principal: Principal | undefined;
 
-export interface ClaimValue {
-  Boolean?: boolean;
-  Date?: string;
-  Text?: string;
-  Number?: number;
-  Claim?: Claim;
-}
+export type ClaimValue = { 'Date' : string } |
+  { 'Text' : string } |
+  { 'Boolean' : boolean } |
+  { 'Number' : bigint } |
+  { 'Claim' : Claim };
+
 export type ClaimRecord = [string, ClaimValue];
 
 
@@ -80,12 +79,14 @@ document.getElementById("loginBtn")?.addEventListener("click", async () => {
   // Find out which URL should be used for login.
   const iiUrl = document.querySelector<HTMLInputElement>("#iiUrl")!.value;
 
+
   // Call authClient.login(...) to login with Internet Identity. This will open a new tab
   // with the login prompt. The code has to wait for the login process to complete.
   // We can either use the callback functions directly or wrap in a promise.
   await new Promise<void>((resolve, reject) => {
     authClient.login({
       identityProvider: iiUrl,
+      derivationOrigin: "http://bkyz2-fmaaa-aaaaa-qaaaq-cai.localhost:4943",
       onSuccess: resolve,
       onError: reject,
     });
@@ -111,14 +112,12 @@ document.getElementById("credentialBtn")?.addEventListener("click", async () => 
   }
 
   const civic_canister = createActor(canisterId, option);
-
+  const id: ClaimRecord = ["id", {Text: "did:example:c276e12ec21ebfeb1f712ebc6f1"}]
+  const name: ClaimRecord = ["name", {Text: "Example University"}]
+  const degreeType: ClaimRecord = ["degreeType", {Text: "MBA"}]
   // Example Credential with mixed claims
   const alumniOfClaim : Claim = {
-    claims: [
-      ["id", {Text: "did:example:c276e12ec21ebfeb1f712ebc6f1"}],
-     [ "name", {Text: "Example University"}],
-     [ "degreeType", {Text: "MBA"}]
-    ]
+    claims: [id, name, degreeType]
   }
     
   const mixedClaim: Claim = {
@@ -139,6 +138,9 @@ document.getElementById("credentialBtn")?.addEventListener("click", async () => 
   };
   try {
     console.log("Adding a new credential", credential);
+    if (principal===undefined || credential.claim === undefined) {
+      throw new Error("Principal is undefined");
+    }
     const credentialResponse = await civic_canister.add_credentials(principal, [credential]);
 
     console.log("Credential added:", credentialResponse);
