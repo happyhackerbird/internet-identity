@@ -9,8 +9,7 @@
     "test": "npm run opts -- ./test.ts",
     "format": "prettier --write --plugin-search-dir=. .",
     "build": "tsc --noEmit && vite build",
-    "dev": "vite",
-    "issue": "tsc scripts/issueCredential.ts && node scripts/issueCredential.js"
+    "dev": "vite"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.6",
